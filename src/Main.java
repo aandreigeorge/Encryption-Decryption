@@ -10,8 +10,10 @@ public class Main {
         int key = Integer.parseInt(argumentsMap.getOrDefault("-key", "0"));
         String data = argumentsMap.getOrDefault("-data", "");
 
+        String algorithm = argumentsMap.getOrDefault("-alg", "shift");
+
         if (!data.isEmpty()) {
-            performAction(mode, data, key, System.out);
+            performAction(mode, data, key, algorithm, System.out);
         } else {
             String inputFile = argumentsMap.get("-in");
             String outputFile = argumentsMap.get("-out");
@@ -23,12 +25,12 @@ public class Main {
                     while ((line = reader.readLine()) != null) {
                         inputData.append(line);
                     }
-                    performAction(mode, inputData.toString(), key, getOutputStream(outputFile));
+                    performAction(mode, inputData.toString(), key, algorithm, getOutputStream(outputFile));
                 } catch (IOException e) {
                     System.out.println("Error: Unable to read from input file.");
                 }
             } else {
-                performAction(mode, "", key, getOutputStream(outputFile));
+                performAction(mode, "", key, algorithm, getOutputStream(outputFile));
             }
         }
     }
@@ -52,15 +54,42 @@ public class Main {
         return System.out;
     }
 
-    static void performAction(String mode, String data, int key, OutputStream outputStream) {
-        if (mode.equalsIgnoreCase("ENC")) {
-            encryptMessage(data, key, outputStream);
-        } else if (mode.equalsIgnoreCase("DEC")) {
-            decryptMessage(data, key, outputStream);
+    static void performAction(String mode, String data, int key, String algorithm, OutputStream outputStream) {
+        if (algorithm.equalsIgnoreCase("shift")) {
+            if (mode.equalsIgnoreCase("ENC")) {
+                shiftEncryptMessage(data, key, outputStream);
+            } else if (mode.equalsIgnoreCase("DEC")) {
+                shiftDecryptMessage(data, key, outputStream);
+            }
+        } else if (algorithm.equalsIgnoreCase("unicode")) {
+            if (mode.equalsIgnoreCase("ENC")) {
+                unicodeEncryptMessage(data, key, outputStream);
+            } else if (mode.equalsIgnoreCase("DEC")) {
+                unicodeDecryptMessage(data, key, outputStream);
+            }
         }
     }
 
-    static void encryptMessage(String message, int key, OutputStream outputStream) {
+    static void shiftEncryptMessage(String message, int key, OutputStream outputStream) {
+        try (PrintWriter writer = new PrintWriter(outputStream)) {
+            for (int i = 0; i < message.length(); i++) {
+                char currentChar = message.charAt(i);
+                if (Character.isLetter(currentChar)) {
+                    int shift = Character.isUpperCase(currentChar) ? 'A' : 'a';
+                    int encryptedAscii = (currentChar - shift + key) % 26 + shift;
+                    writer.print((char) encryptedAscii);
+                } else {
+                    writer.print(currentChar);
+                }
+            }
+        }
+    }
+
+    static void shiftDecryptMessage(String message, int key, OutputStream outputStream) {
+        shiftEncryptMessage(message, 26 - key, outputStream);
+    }
+
+    static void unicodeEncryptMessage(String message, int key, OutputStream outputStream) {
         try (PrintWriter writer = new PrintWriter(outputStream)) {
             for (int i = 0; i < message.length(); i++) {
                 int encryptedAscii = (message.charAt(i) + key) % 128;
@@ -69,7 +98,7 @@ public class Main {
         }
     }
 
-    static void decryptMessage(String message, int key, OutputStream outputStream) {
+    static void unicodeDecryptMessage(String message, int key, OutputStream outputStream) {
         try (PrintWriter writer = new PrintWriter(outputStream)) {
             for (int i = 0; i < message.length(); i++) {
                 int decryptedAscii = (message.charAt(i) - key + 128) % 128;
