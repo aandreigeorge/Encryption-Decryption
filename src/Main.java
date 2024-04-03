@@ -9,7 +9,6 @@ public class Main {
         String mode = argumentsMap.getOrDefault("-mode", "enc");
         int key = Integer.parseInt(argumentsMap.getOrDefault("-key", "0"));
         String data = argumentsMap.getOrDefault("-data", "");
-
         String algorithm = argumentsMap.getOrDefault("-alg", "shift");
 
         if (!data.isEmpty()) {
@@ -55,6 +54,7 @@ public class Main {
     }
 
     static void performAction(String mode, String data, int key, String algorithm, OutputStream outputStream) {
+
         if (algorithm.equalsIgnoreCase("shift")) {
             if (mode.equalsIgnoreCase("ENC")) {
                 shiftEncryptMessage(data, key, outputStream);
